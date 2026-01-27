@@ -1,46 +1,23 @@
-"""
-MongoDB Database Utilities
-==========================
-This module handles MongoDB connection and provides database access utilities.
-
-Why separate database logic?
-- Single point of connection management
-- Easy to mock for testing
-- Centralized index creation
-
-Interview Tip:
-    Connection pooling is handled automatically by PyMongo.
-    The MongoClient maintains a pool of connections for efficiency.
-"""
+"""MongoDB database utilities."""
 
 from pymongo import MongoClient, ASCENDING, DESCENDING
-from pymongo.errors import DuplicateKeyError, ConnectionFailure
+from pymongo.errors import ConnectionFailure
 from app.config import Config
 
-# Module-level database client and collection references
-# These are initialized once and reused throughout the application
+# Module-level references
 _client = None
 _db = None
 _collection = None
 
 
 def get_database():
-    """
-    Get the MongoDB database instance.
-    
-    Returns:
-        Database: MongoDB database object
-    
-    Raises:
-        ConnectionFailure: If unable to connect to MongoDB
-    """
+    """Get MongoDB database instance."""
     global _client, _db
     
     if _db is None:
         try:
             _client = MongoClient(Config.MONGODB_URI)
             _db = _client[Config.DATABASE_NAME]
-            # Test the connection
             _client.admin.command('ping')
             print(f"✓ Connected to MongoDB: {Config.DATABASE_NAME}")
         except ConnectionFailure as e:
@@ -51,16 +28,7 @@ def get_database():
 
 
 def get_collection():
-    """
-    Get the github_events collection.
-    
-    Returns:
-        Collection: MongoDB collection object for github_events
-    
-    Interview Tip:
-        Always use a dedicated function to get collection references.
-        This ensures consistent collection naming and easy refactoring.
-    """
+    """Get github_events collection."""
     global _collection
     
     if _collection is None:
@@ -71,26 +39,10 @@ def get_collection():
 
 
 def init_database():
-    """
-    Initialize database and create required indexes.
-    
-    This function should be called once during app startup.
-    It creates:
-    1. Unique index on request_id (prevents duplicates)
-    2. Descending index on timestamp (for efficient sorting)
-    
-    Why create indexes?
-    - request_id index: Ensures no duplicate events are stored
-    - timestamp index: Speeds up queries that sort by time
-    
-    Interview Tip:
-        Always create indexes on fields used in queries and unique constraints.
-        Indexes significantly improve query performance on large collections.
-    """
+    """Initialize database and create indexes."""
     collection = get_collection()
     
-    # Create unique index on request_id to prevent duplicate events
-    # If a duplicate request_id is inserted, MongoDB will raise DuplicateKeyError
+    # Unique index on request_id (prevents duplicates)
     collection.create_index(
         [("request_id", ASCENDING)],
         unique=True,
@@ -98,8 +50,7 @@ def init_database():
     )
     print("✓ Created unique index on request_id")
     
-    # Create descending index on timestamp for efficient sorting
-    # Most queries will sort by latest first, so DESCENDING is optimal
+    # Descending index on timestamp (for sorting)
     collection.create_index(
         [("timestamp", DESCENDING)],
         name="timestamp_desc_idx"
@@ -108,11 +59,7 @@ def init_database():
 
 
 def close_connection():
-    """
-    Close the MongoDB connection.
-    
-    Call this during application shutdown to cleanly close connections.
-    """
+    """Close MongoDB connection."""
     global _client, _db, _collection
     
     if _client:

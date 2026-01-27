@@ -1,13 +1,5 @@
 /**
- * Home Page
- * =========
- * 
- * Main entry point for the GitHub Events Dashboard.
- * This page displays the EventsList component with polling.
- * 
- * Interview Tip:
- *   Keep page components simple and focused on layout.
- *   Business logic should be in hooks or services.
+ * Home page - GitHub Events Dashboard.
  */
 
 import EventsList from '@/components/EventsList';
